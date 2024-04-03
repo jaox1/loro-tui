@@ -9,21 +9,24 @@ use crate::states::action::Action;
 use crate::states::state::{State, View};
 
 use super::component::Component;
-use super::view::chat_view::ChatView;
-use super::view::login_view::LoginView;
+use super::views::chat_view::ChatView;
+use super::views::login_view::LoginView;
 
 enum UIError {
-    Default
+    Default,
 }
 
 pub struct UiHandler {
     action_sender: UnboundedSender<Action>,
     terminal: Terminal<CrosstermBackend<Stdout>>,
-    current_view: Box<dyn Component>
+    current_view: Box<dyn Component>,
 }
 
 impl UiHandler {
-    pub async fn run(&mut self, mut state_receiver: UnboundedReceiver<State>) -> Result<(), UIError> {
+    pub async fn run(
+        &mut self,
+        mut state_receiver: UnboundedReceiver<State>,
+    ) -> Result<(), UIError> {
         let mut crossterm_events = EventStream::new();
         loop {
             tokio::select! {
@@ -40,7 +43,7 @@ impl UiHandler {
                     },
                     _ => (),
                 },
-                
+
             }
             let _ = self.terminal.draw(|frame| {
                 self.current_view.render(frame);
@@ -48,4 +51,3 @@ impl UiHandler {
         }
     }
 }
-

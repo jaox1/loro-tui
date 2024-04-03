@@ -1,4 +1,3 @@
-use crate::states::state::State;
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
 

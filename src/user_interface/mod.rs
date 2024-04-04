@@ -1,3 +1,3 @@
 mod component;
-mod ui_handler;
+pub mod ui_handler;
 mod views;

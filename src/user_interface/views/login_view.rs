@@ -1,4 +1,8 @@
+use crossterm::event::KeyEvent;
 use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::style::Stylize;
+use ratatui::text::{Line, Text};
+use ratatui::widgets::Paragraph;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::states::action::Action;
@@ -26,7 +30,7 @@ impl LoginView {
 }
 
 impl Component for LoginView {
-    fn handle_key_event(&mut self, key: crossterm::event::KeyEvent) {}
+    fn handle_key_event(&mut self, key: KeyEvent) {}
     fn render(&self, frame: &mut ratatui::Frame) {
         let layout = Layout::default()
             .direction(Direction::Vertical)
@@ -36,5 +40,32 @@ impl Component for LoginView {
                 Constraint::Ratio(1, 3),
             ])
             .split(frame.size());
+        let sub_layout = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Ratio(1, 3),
+                Constraint::Min(1),
+                Constraint::Ratio(1, 3),
+            ])
+            .split(layout[1]);
+        let center = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Length(3),
+                Constraint::Min(1),
+            ])
+            .split(sub_layout[1]);
+
+        self.input_box.render(frame, center[0]);
+
+        let help_text = Paragraph::new(Text::from(Line::from(vec![
+            "Press ".into(),
+            "<Enter>".bold(),
+            " to login or ".into(),
+            "<Esc>".bold(),
+            " to exit".into(),
+        ])));
+        frame.render_widget(help_text, center[1]);
     }
 }

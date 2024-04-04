@@ -5,16 +5,13 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio_stream::StreamExt;
 
+use crate::models::error::AppError;
 use crate::states::action::Action;
 use crate::states::state::{State, View};
 
 use super::component::Component;
 use super::views::chat_view::ChatView;
 use super::views::login_view::LoginView;
-
-enum UIError {
-    Default,
-}
 
 pub struct UiHandler {
     action_sender: UnboundedSender<Action>,
@@ -23,10 +20,23 @@ pub struct UiHandler {
 }
 
 impl UiHandler {
+    pub fn new(terminal: Terminal<CrosstermBackend<Stdout>>) -> (Self, UnboundedReceiver<Action>) {
+        let (action_sender, action_receiver) = tokio::sync::mpsc::unbounded_channel();
+        let current_view = Box::new(LoginView::new(action_sender.clone(), &State::default()));
+        (
+            UiHandler {
+                action_sender,
+                terminal,
+                current_view,
+            },
+            action_receiver,
+        )
+    }
+
     pub async fn run(
         &mut self,
         mut state_receiver: UnboundedReceiver<State>,
-    ) -> Result<(), UIError> {
+    ) -> Result<(), AppError> {
         let mut crossterm_events = EventStream::new();
         loop {
             tokio::select! {

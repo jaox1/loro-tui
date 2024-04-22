@@ -1,6 +1,6 @@
 use std::io::Stdout;
 
-use crossterm::event::{Event, EventStream, KeyEvent};
+use crossterm::event::{Event, EventStream};
 use ratatui::{backend::CrosstermBackend, Terminal};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio_stream::StreamExt;

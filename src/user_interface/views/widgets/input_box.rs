@@ -1,26 +1,49 @@
-use crate::user_interface::component::Component;
-use crossterm::event::KeyEvent;
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     layout::Rect,
-    style::{self, Color, Style, Stylize},
+    style::{Color, Style, Stylize},
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
+use std::clone::Clone;
 
 pub struct InputBox {
     text: String,
     cursor_position: usize,
+    field_name: String,
+    selected: bool,
 }
 
 impl InputBox {
-    pub fn new() -> Self {
+    pub fn new(field_name: String, selected: bool) -> Self {
         InputBox {
             cursor_position: 0,
             text: String::new(),
+            field_name,
+            selected,
         }
     }
 
-    pub fn handle_key_event(&mut self, key: KeyEvent) {}
+    pub fn focus(&mut self) {
+        self.selected = true
+    }
+
+    pub fn unfocus(&mut self) {
+        self.selected = false
+    }
+
+    pub fn handle_key_event(&mut self, key: KeyEvent) {
+        if self.selected {
+            match key.code {
+                KeyCode::Char(c) => {
+                    self.enter_char(c);
+                }
+                KeyCode::Backspace => self.delete_char(),
+                KeyCode::Delete => self.delete_char(),
+                _ => (),
+            }
+        }
+    }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
         let input = Paragraph::new(self.text.as_str())
@@ -29,14 +52,16 @@ impl InputBox {
                 Block::default()
                     .borders(Borders::ALL)
                     .fg(Color::Yellow)
-                    .title("Input"),
+                    .title(self.field_name.as_str()),
             );
 
         frame.render_widget(input, area);
 
-        let x = area.x + self.cursor_position as u16 + 1;
-        let y = area.y + 1;
-        frame.set_cursor(x, y)
+        if self.selected {
+            let x = area.x + self.cursor_position as u16 + 1;
+            let y = area.y + 1;
+            frame.set_cursor(x, y)
+        }
     }
 
     pub fn text(&self) -> &str {
@@ -79,21 +104,8 @@ impl InputBox {
     fn delete_char(&mut self) {
         let is_not_cursor_leftmost = self.cursor_position != 0;
         if is_not_cursor_leftmost {
-            // Method "remove" is not used on the saved text for deleting the selected char.
-            // Reason: Using remove on String works on bytes instead of the chars.
-            // Using remove would require special care because of char boundaries.
-
-            let current_index = self.cursor_position;
-            let from_left_to_current_index = current_index - 1;
-
-            // Getting all characters before the selected character.
-            let before_char_to_delete = self.text.chars().take(from_left_to_current_index);
-            // Getting all characters after selected character.
-            let after_char_to_delete = self.text.chars().skip(current_index);
-
-            // Put all characters together except the selected one.
-            // By leaving the selected one out, it is forgotten and therefore deleted.
-            self.text = before_char_to_delete.chain(after_char_to_delete).collect();
+            let last_idx = self.text.len() - 1;
+            self.text.remove(last_idx);
             self.move_cursor_left();
         }
     }
